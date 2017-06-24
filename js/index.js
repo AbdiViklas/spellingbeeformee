@@ -3,7 +3,7 @@ if ($(window).width() >= 600) { //layout alignment based on screen size
   $("#resetBox").addClass("left-align");
 }
 
-const spellingList = ["fit",
+var spellingList = ["fit",
     "mad",
     "bus",
     "dots",
@@ -251,7 +251,7 @@ if ('speechSynthesis' in window === false) {
 }
 
 // Words spelled wrong or skipped will be pushed to this array, and ultimately to the #studyList modal
-let studyListArray = [];
+var studyListArray = [];
 
 if (!window.localStorage) {
   hasStorage = false;
@@ -275,20 +275,20 @@ if (localStorage.studyListArray === undefined) {
 }
 
 // Load current word and record high score from localStorage, or start them from scratch
-let currentWordIndex;
+var currentWordIndex;
 if (hasStorage) {
   currentWordIndex = localStorage.currentWordIndex;
 } else {
   currentWordIndex = 0;
 }
-let recordCount;
+var recordCount;
 if (hasStorage && Number(localStorage.recordScore) >= 0) {
   recordCount = Number(localStorage.recordScore);
 } else {
   recordCount = 0;
 }
 $("#recordScore").html(recordCount);
-let word = "",
+var word = "",
     tts,
     usingTTS = false,
     audio,
@@ -304,64 +304,36 @@ let word = "",
 // Often the API takes several seconds to return, so it's possible to submit an answer and have the app move on to expect the "new" word, but the play button is still playing the "old" word. So here's a function to disable the button and give it a loading animation, to be called in updateWord() below.
 function preloader() {
   $("#play").addClass("disabled").html('<div class="preloader-wrapper small active valign-wrapper"><div class="spinner-layer spinner valign"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div>');
-  loadaling = true; // http://hrwiki.org/wiki/Irregular_Loading_Screens
+  loadaling = true;
 }
 
 // the function to re-enable the button and remove the animation is included in the "success" function of the API call
 function stopLoader() {
   $("#play").removeClass("disabled").html('<i class="large material-icons">play_arrow</i>');
-  loadaling = false;
+  loadaling = false; // http://hrwiki.org/wiki/Irregular_Loading_Screens
 }
 
-let updateWord = function() {
+var updateWord = function() {
   preloader();
   word = spellingList[currentWordIndex];
   localStorage.currentWordIndex = currentWordIndex;
   hintLetter = 1; // resetting the "hint" function to the beginning of the new word
 }
 
-// var settings = {
-//   "async": true,
-//   "crossDomain": true,
-//   "url": "https://od-api.oxforddictionaries.com/api/v1/entries/en/fit/regions=us",
-//   "method": "GET",
-//   "headers": {
-//     "accept": "application/json",
-//     "app_id": "0221faad",
-//     "app_key": "e4af98008c290b83307d432a537cf190",
-//     "cache-control": "no-cache",
-//     "postman-token": "6544e3df-d61d-2392-5dbb-e5e64f10d226"
-//   }
-// }
-
-// $.ajax(settings).done(function (response) {
-//   console.log(response);
-// });
 // Here's where the magic happens.
-function getDictionary() {
+function getMerriamWebster() {
   updateWord();
   usingTTS = false; // reset in case the last word made it true
-  let xhr = new XMLHttpRequest();
-  xhr.open("GET", "https://od-api.oxforddictionaries.com/api/v1", true);
-  xhr.setRequestHeader("Accept", "application/json");
-  xhr.onload =function () {
-    console.log(xhr.responseText);
-  };
-  xhr.send();
   $.ajax({
-    url: "https://od-api.oxforddictionaries.com/api/v1/entries/en/" + word + "/regions=us",
-    headers: {
-      "Accept": "application/json",
-      "app_id": "0221faad",
-      "app_key": "e4af98008c290b83307d432a537cf190"
-    },
-    method: "GET",
+    url: "https://cors-anywhere.herokuapp.com/http://www.dictionaryapi.com/api/v1/references/collegiate/xml/" + word + "?key=9ef9d420-7fba-449f-9167-bd807480798e", //maybe remove the cors-anywhere once I get this off Codepen
+    type: "GET",
     contentType: "text/plain",
-    dataType: "jsonp",
-    crossDomain: "true",
+    xhrFields: {
+      withCredentials: false
+    },
+    dataType: "xml",
     success: function(data) {
-      console.log("it worked!");
-      let audioFilename = $(data).find("hw:contains(" + word + ") ~ sound wav").html();
+      var audioFilename = $(data).find("hw:contains(" + word + ") ~ sound wav").html();
       // look through the XML response for a "<hw>" element with the desired word, with a sibling <sound> and harvest its <wav>. Cause that seems to be how the API is set up... most often. Except when it's not (gila monster!).
       console.log("wav =" + audioFilename);
       // If that doesn't yield a usable result--including if it yields a gila monster--then turn to HTML 5 SpeechSynthesis
@@ -374,7 +346,7 @@ function getDictionary() {
           tts = new SpeechSynthesisUtterance(word);
         }
       } else {
-        let subdir = "";
+        var subdir = "";
         // the API specifies some edge cases for their audio directory structure
         if (audioFilename.startsWith("bix")) {
           subdir = "bix/";
@@ -390,7 +362,7 @@ function getDictionary() {
         audio = new Audio(audioURL);
       }
       // to generate the "example": .text() instead of .html() gets around the fact that sometimes the word itself is interrupted by tags. Unfortunately, it returns all the instances, so we have to filter by .first(). Even if the first one isn't always the best... Too bad there's no $.best().
-      let sentence = $(data).find("vi:contains(" + word + ")").first().text();
+      var sentence = $(data).find("vi:contains(" + word + ")").first().text();
       if (sentence === undefined || sentence.length < 1) {
         sentence = "sorry, unavailable";
       }
@@ -406,14 +378,14 @@ function getDictionary() {
 
 // increment the "right" counter
 function updateRight() {
-  let rightCount = $("#rightScore").html();
+  var rightCount = $("#rightScore").html();
   rightCount++;
   $("#rightScore").html(rightCount);
 }
 
 // increment the "wrong" counter, AND push the misspelled word to the study list
 function updateWrong() {
-  let wrongCount = $("#wrongScore").html();
+  var wrongCount = $("#wrongScore").html();
   wrongCount++;
   $("#wrongScore").html(wrongCount);
   if (studyListArray.includes(word)) {
@@ -453,7 +425,7 @@ $("#play").click(function() {
 // function to process submitted answer
 $("#response").submit(function(event) {
   event.preventDefault();
-  let response = $("#responseText").val();
+  var response = $("#responseText").val();
   if (word === spellingList[spellingList.length - 1]) {
     Materialize.toast("Yay!! You made it to the end of the list! Now you can click the 'restart' button to start again at the beginning.", 4000, "rounded");
     updateRight();
@@ -464,8 +436,7 @@ $("#response").submit(function(event) {
     updateRight();
     updateRecord();
     currentWordIndex++;
-    getDictionary
-  ();
+    getMerriamWebster();
   } else {
     Materialize.toast("Sorry, that's not right. Try again!", 4000, "rounded");
     updateWrong();
@@ -487,8 +458,7 @@ $("#hint").click(function() {
 // I pulled out the skip function, minus the part about saving to localStorage, to let the app skip TTS words when TTS is unavailable
 function skipWord() {
   currentWordIndex++;
-  getDictionary
-();
+  getMerriamWebster();
 }
 
 $("#skip").click(function() {
@@ -499,21 +469,19 @@ $("#skip").click(function() {
 
 $("#restart").click(function() {
   currentWordIndex = 0;
-  getDictionary
-();
+  getMerriamWebster();
 });
 
 $("#random").click(function() {
   currentWordIndex = Math.floor((Math.random() * 100) + 1);
-  getDictionary
-();
+  getMerriamWebster();
   $('#jumpWord').modal('close');
 });
 
 // open the study list modal, and build its content
 $("#study").click(function() {
-  for (let i = 0, limit = studyListArray.length; i < limit; i++) {
-    let studyWord = studyListArray[i];
+  for (var i = 0, limit = studyListArray.length; i < limit; i++) {
+    var studyWord = studyListArray[i];
     if (studyWord === "undefined" || studyWord.length < 1 || $("#studyListWords").find("#" + studyWord).length) {
       continue;
     } else {
@@ -531,8 +499,7 @@ $("#wordJumper").submit(function(event) {
   event.preventDefault();
   currentWordIndex = document.getElementById("jumpSlider").value - 1;
   console.log(currentWordIndex);
-  getDictionary
-();
+  getMerriamWebster();
 });
 
 $("#aboutLink").click(function() {
@@ -553,26 +520,9 @@ $("#studyClear").click(function() {
 });
 
 // kick it off
-$(document).ready(getDictionary());
+$(document).ready(getMerriamWebster());
 
 $(document).ready(function() {
   // the "href" attribute of .modal-trigger must specify the modal ID that wants to be triggered
   $('.modal').modal();
 });
-
-// draft of post to oxford dictionaries forum:
-// I feel like I have a Stupid Beginner problem. I really want to use the OxfordDictionaries API in a spelling quiz app I'm developing for my daughter, but I'm too inexperienced with making API techniques to make the request correctly. Here's what I had at first:
-// `function getDictionary() {
-//   $.ajax({
-//     url: "https://od-api.oxforddictionaries.com/api/v1/entries/en/" + word + "/regions=us",
-//     headers: {
-//       "Accept": "application/json",
-//       "app_id": "my_id",
-//       "app_key": "my_key"
-//     },
-//     method: "GET",
-//     contentType: "text/plain",
-//     dataType: "json",
-//     success: function(data) {
-//      etc}`
-// As this wasn't working, I tried changing dataType to jsonp, and adding `crossDomain: "true"`, but no luck. I resolved, not for the first time, to figure out how to make a proper CORS request once and for all. [It seems](https://www.html5rocks.com/en/tutorials/cors/#toc-making-a-cors-request "It seems") I need to 
