@@ -425,7 +425,7 @@ $("#play").click(function() {
 // function to process submitted answer
 $("#response").submit(function(event) {
   event.preventDefault();
-  var response = $("#responseText").val();
+  var response = $("#responseText").val().trim();
   if (word === spellingList[spellingList.length - 1]) {
     Materialize.toast("Yay!! You made it to the end of the list! Now you can click the 'restart' button to start again at the beginning.", 4000, "rounded");
     updateRight();
