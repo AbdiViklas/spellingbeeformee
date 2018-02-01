@@ -15,6 +15,10 @@ app.use(express.static("client/build"));
 // use router
 router(app);
 
+// DO I NEED?
+// Set up promises with mongoose
+mongoose.Promise = global.Promise;
+
 // connect to db
 mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/spellingbee", {
   useMongoClient: true
